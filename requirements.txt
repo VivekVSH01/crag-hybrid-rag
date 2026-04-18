@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic
+pydantic-settings
+docling
+docling-core
+qdrant-client
+tavily-python
+python-dotenv
+loguru
+numpy
+sentence-transformers
+google-generativeai
