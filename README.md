@@ -1,328 +1,113 @@
-<div align="center">
+# zrok - Secure internet sharing made simple
 
-# CRAG Hybrid RAG
+![zrok logo](docs/images/zrok_cover.png)
 
-### *Corrective RAG with Hybrid Vector Search*
+**Share anything, anywhere, instantly. Enterprise reliability. No firewall changes. No port forwarding. No hassle.**
 
-[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115.6-009688.svg?logo=fastapi)](https://fastapi.tiangolo.com)
-[![Qdrant](https://img.shields.io/badge/Qdrant-Vector_DB-DC244C?logo=qdrant)](https://qdrant.tech)
-[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4-412991?logo=openai)](https://openai.com)
-[![uv](https://img.shields.io/badge/uv-Package_Manager-DE5FE9?logo=astral)](https://docs.astral.sh/uv/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+zrok lets you securely share web services, files, and network resources with anyone—whether they're across the internet or your private network. Built on zero-trust networking, it works through firewalls and NAT without requiring any network configuration changes.
 
-<p align="center">
-  <i>Hybrid Vector Search • Relevance Evaluation • Web Search Fallback • Optional Reranking</i>
-</p>
+## Quick start
 
-[Features](#-features) • [Quick Start](#-quick-start) • [Architecture](#-architecture) • [API](#-api-endpoints)
+Get sharing in under 2 minutes:
 
-<br>
+1. **[Install zrok](https://docs.zrok.io/docs/guides/install/)** for your platform
+2. **Get an account**: `zrok invite` (use the free [zrok.io service](https://docs.zrok.io/docs/getting-started/))
+3. **Enable sharing**: `zrok enable`
 
-```
-╔══════════════════════════════════════════════════════════════╗
-║                                                              ║
-║   📚 Upload Documents  →  🔍 Hybrid Search  →  🤖 LLM Gen    ║
-║                                                              ║
-║   ✅ Hybrid Search: Dense + Sparse + RRF Fusion             ║
-║   ✅ CRAG: Adaptive Web Search Based on Relevance           ║
-║   ✅ Standard: Fast direct RAG from your documents          ║
-║                                                              ║
-╚══════════════════════════════════════════════════════════════╝
-```
-
-</div>
-
----
-
-## Features
-
-<table>
-<tr>
-<td width="50%">
-
-### CRAG Mode
-- LLM-based relevance evaluation
-- Adaptive web search (Tavily) when docs are insufficient
-- Smart routing: relevant / ambiguous / irrelevant
-- Real-time data access
-
-</td>
-<td width="50%">
-
-### Standard Mode
-- Direct hybrid vector retrieval
-- Fast single-pass generation
-- Dense + sparse + RRF fusion
-- Ideal for well-stocked knowledge bases
-
-</td>
-</tr>
-<tr>
-<td width="50%">
-
-### Hybrid Search
-- Dense semantic search (OpenAI embeddings)
-- Sparse BM25 keyword search
-- Reciprocal Rank Fusion (RRF) combining both
-- Dual vector storage in Qdrant
-
-</td>
-<td width="50%">
-
-### Optional Reranking
-- Cross-encoder reranking (local model)
-- Voyage AI reranking (API)
-- Configurable initial retrieval pool
-- Improves precision for top-k results
-
-</td>
-</tr>
-</table>
-
----
-
-## Hybrid Search Modes
-
-This system implements **true hybrid search** using Qdrant's dual vector system:
-
-| Mode | Description | Best For |
-|------|-------------|----------|
-| **Dense** | Semantic search using OpenAI embeddings | Conceptual queries, synonyms |
-| **Sparse** | BM25 keyword search with IDF weighting | Exact terms, technical jargon |
-| **Hybrid** | RRF fusion of dense + sparse (default) | Best overall accuracy |
-
-**Key Features:**
-- **Dual Vector Indexing**: Every document gets both dense (1536-dim) and sparse (BM25) vectors
-- **RRF Fusion**: Reciprocal Rank Fusion combines rankings from both search methods
-- **Automatic Tokenization**: 50+ stop words filtered, term frequency analysis
-- **Compatible**: Works with both Standard and CRAG modes, plus optional reranking
-
----
-
-## Quick Start
-
-### Prerequisites
+That's it! Now you can share anything:
 
 ```bash
-Python 3.12+
-Docker (for Qdrant)
-OpenAI API Key
-Tavily API Key (for CRAG mode)
+# Share a web service publicly
+$ zrok share public localhost:8080
+
+# Share files as a network drive  
+$ zrok share public --backend-mode drive ~/Documents
+
+# Share privately with other zrok users
+$ zrok share private localhost:3000
 ```
 
-### Installation
+![zrok Web Console](docs/images/zrok_web_console.png)
+
+## What you can share
+
+### Web services
+
+Instantly make local web apps accessible over the internet:
 
 ```bash
-# 1. Install uv (ultra-fast package manager)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# 2. Clone and setup
-git clone <repo-url>
-cd crag-hybrid-rag
-cp .env.example .env
-# Edit .env with your API keys
-
-# 3. Start services
-docker run -p 6333:6333 qdrant/qdrant  # Terminal 1
-uv run uvicorn app.main:app --reload   # Terminal 2
+zrok share public localhost:8080
 ```
 
-API running at http://localhost:8000 — Docs at http://localhost:8000/docs
+![zrok share public](docs/images/zrok_share_public.png)
 
----
+### Files & directories
 
-## Architecture
-
-```mermaid
-graph LR
-    A[User Query] --> B{Mode?}
-    B -->|Standard| C[Hybrid Vector Search]
-    B -->|CRAG| D[Hybrid Vector Search]
-
-    D --> E[LLM Relevance Check]
-    E -->|Irrelevant / Ambiguous| F[Web Search via Tavily]
-    E -->|Relevant| G[Use Retrieved Docs]
-
-    C --> H[Generate Answer]
-    F --> H
-    G --> H
-
-    style A fill:#e1f5e1
-    style H fill:#e1f5e1
-    style E fill:#fff4e6
-```
-
-### RAG Mode Comparison
-
-| Feature | Standard | CRAG |
-|---------|----------|------|
-| **Hybrid Search** | ✅ | ✅ |
-| **Web Search Fallback** | ❌ | ✅ |
-| **Relevance Evaluation** | ❌ | ✅ |
-| **Optional Reranking** | ✅ | ✅ |
-| **Latency** | Fast | Medium |
-| **Best For** | Internal docs Q&A | Mixed / current data |
-
----
-
-## API Endpoints
-
-### 1. Upload Document
+Turn any folder into a shareable network drive:
 
 ```bash
-curl -X POST "http://localhost:8000/upload/" \
-  -F "file=@document.pdf"
+zrok share public --backend-mode drive ~/Repos/zrok
 ```
 
-Supported formats: PDF, Markdown, TXT, JSON
+![zrok share public -b drive](docs/images/zrok_share_public_drive.png)
+![mounted zrok drive](docs/images/zrok_share_public_drive_explorer.png)
 
-### 2. Query — Standard Mode
+### Private resources
 
-```bash
-curl -X POST "http://localhost:8000/query/" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "Summarise the key findings",
-    "mode": "standard",
-    "search_mode": "hybrid",
-    "top_k": 5
-  }'
+Share TCP/UDP services securely with other zrok users—no public internet exposure.
+
+## Key features
+
+- **Zero Configuration**: Works through firewalls, NAT, and corporate networks
+- **Secure by Default**: End-to-end encryption with zero-trust architecture  
+- **Public & Private Sharing**: Share with anyone or just specific users
+- **Multiple Protocols**: HTTP/HTTPS, TCP, UDP, and file sharing
+- **Cross-Platform**: Windows, macOS, Linux, and Raspberry Pi
+- **Self-Hostable**: Run your own zrok service instance
+
+## How it works
+
+zrok is built on [OpenZiti](https://docs.openziti.io/docs/learn/introduction/), a programmable zero-trust network overlay. This means:
+
+- **No inbound connectivity required**: Works from behind firewalls and NAT
+- **End-to-end encryption**: All traffic is encrypted, even from zrok servers
+- **Peer-to-peer connections**: Direct connections between users when possible
+- **Identity-based access**: Share with specific users, not IP addresses
+
+## Developer SDK
+
+Embed zrok sharing into your applications with our Go SDK:
+
+```go
+// Create a share
+shr, err := sdk.CreateShare(root, &sdk.ShareRequest{
+    BackendMode: sdk.TcpTunnelBackendMode,
+    ShareMode:   sdk.PrivateShareMode,
+})
+
+// Accept connections
+listener, err := sdk.NewListener(shr.Token, root)
 ```
 
-### 3. Query — CRAG Mode
+[Read the SDK guide](https://blog.openziti.io/the-zrok-sdk) for complete examples.
 
-```bash
-curl -X POST "http://localhost:8000/query/" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "What are the latest AI developments?",
-    "mode": "crag",
-    "search_mode": "hybrid",
-    "top_k": 5
-  }'
-```
+## Self-hosting
 
-Returns answer + relevance evaluation + web search results (if triggered).
+Run your own zrok service—from Raspberry Pi to enterprise scale:
 
-### 4. Query with Reranking
+- Single binary contains everything you need
+- Scales from small personal instances to large public services
+- Built on the same codebase as the public zrok.io service
 
-```bash
-curl -X POST "http://localhost:8000/query/" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "query": "Explain the methodology in detail",
-    "mode": "crag",
-    "search_mode": "hybrid",
-    "top_k": 5,
-    "enable_reranking": true
-  }'
-```
+[Self-Hosting Guide](https://docs.zrok.io/docs/guides/self-hosting/self_hosting_guide/)
 
-**Search mode options:** `"dense"` | `"sparse"` | `"hybrid"` (default)
+## Resources
 
-### 5. Compare Both Modes
-
-```bash
-curl "http://localhost:8000/query/compare?query=Your%20question&top_k=5"
-```
-
-Returns side-by-side comparison of Standard and CRAG.
+- **[Documentation](https://docs.zrok.io/)**
+- **[Office Hours Videos](https://www.youtube.com/watch?v=Edqv7yRmXb0&list=PLMUj_5fklasLuM6XiCNqwAFBuZD1t2lO2)**
+- **[Building from source](./BUILD.md)**
+- **[Contributing](./CONTRIBUTING.md)**
 
 ---
 
-## Configuration
-
-Key settings in `.env`:
-
-```bash
-# LLM
-OPENAI_API_KEY=sk-...
-LLM_MODEL=gpt-4o-mini
-
-# Hybrid Search
-HYBRID_SEARCH_ENABLED=true
-SPARSE_VECTOR_ENABLED=true
-RRF_K=60
-
-# CRAG
-CRAG_RELEVANCE_THRESHOLD=0.7
-CRAG_AMBIGUOUS_THRESHOLD=0.5
-TAVILY_API_KEY=tvly-...
-
-# Vector Database
-QDRANT_URL=http://localhost:6333
-QDRANT_COLLECTION_NAME=crag_documents
-
-# Reranking (optional)
-RERANKING_ENABLED_BY_DEFAULT=false
-RERANKER_BACKEND=local            # or 'voyage'
-VOYAGE_API_KEY=                   # if using voyage backend
-```
-
----
-
-## Testing
-
-```bash
-# Run all tests
-uv run pytest -v
-
-# With coverage
-uv run pytest --cov=app --cov-report=html
-```
-
----
-
-## Project Structure
-
-```
-crag-hybrid-rag/
-├── app/
-│   ├── api/              # FastAPI endpoints (query, upload)
-│   ├── core/             # RetrievalService
-│   ├── services/         # crag, llm_service, embedding, vector_store,
-│   │                     # reranking, web_search, document_processor,
-│   │                     # sparse_vector_service
-│   ├── config.py         # Pydantic settings
-│   └── models.py         # Request / response schemas
-├── uploads/              # Uploaded documents
-├── tests/                # Test suite
-├── .env.example          # Config template
-└── pyproject.toml        # Dependencies
-```
-
----
-
-## Technology Stack
-
-| Component | Library |
-|-----------|---------|
-| API Framework | [FastAPI](https://fastapi.tiangolo.com) |
-| Vector Database | [Qdrant](https://qdrant.tech) |
-| LLM | [OpenAI GPT-4o-mini](https://openai.com) |
-| Document Processing | [Docling](https://github.com/DS4SD/docling) |
-| Web Search | [Tavily](https://tavily.com) |
-| Package Manager | [uv](https://docs.astral.sh/uv/) |
-
----
-
-## Research
-
-- **CRAG**: [Corrective Retrieval Augmented Generation (2024)](https://arxiv.org/abs/2401.15884)
-
----
-
-## License
-
-MIT License — see [LICENSE](LICENSE) for details.
-
----
-
-<div align="center">
-
-**Built to demonstrate production-ready Corrective RAG with hybrid vector search**
-
-[Report Bug](https://github.com/sourangshupal/crag-hybrid-rag/issues) • [Request Feature](https://github.com/sourangshupal/crag-hybrid-rag/issues)
-
-</div>
+*Ready to start sharing? [Get started with zrok →](https://docs.zrok.io/docs/getting-started)*
