@@ -77,4 +77,5 @@ workflows/README.md
 tests/*
 
 # .worktrees/*
-# .worktrees/deploy-aws-eb
+# .worktrees/deploy-aws-ebzrok2
+zrok_2.0.1_linux_amd64.tar.gz
