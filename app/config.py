@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
     
     # API Keys
-    gemini_api_key: str
+    groq_api_key: str
     tavily_api_key: str
     
     # Qdrant
@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     
     # Models
     embedding_model: str = "all-MiniLM-L6-v2"
-    llm_model: str = "gemini-1.5-flash"
+    llm_model: str = "llama-3.1-8b-instant"
     embedding_dimensions: int = 384
     
     # CRAG Settings
