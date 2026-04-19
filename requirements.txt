@@ -9,6 +9,7 @@ qdrant-client
 tavily-python
 python-dotenv
 loguru
+groq
 numpy
 sentence-transformers
 google-generativeai
