@@ -1,4 +1,4 @@
-import google.generativeai as genai
+from groq import Groq
 from app.config import get_settings
 from loguru import logger
 
@@ -6,8 +6,8 @@ from loguru import logger
 class LLMService:
     def __init__(self):
         self.settings = get_settings()
-        genai.configure(api_key=self.settings.gemini_api_key)
-        self.model = genai.GenerativeModel(self.settings.llm_model)
+        self.client = Groq(api_key=self.settings.groq_api_key)
+        self.model = self.settings.llm_model
 
     def generate(
         self,
@@ -17,8 +17,16 @@ class LLMService:
         max_tokens: int = 1000
     ) -> str:
         try:
-            response = self.model.generate_content(f"{system_prompt}\n\n{prompt}")
-            return response.text.strip()
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=temperature,
+                max_tokens=max_tokens
+            )
+            return response.choices[0].message.content.strip()
         except Exception as e:
             logger.error(f"LLM generation error: {e}")
             raise
@@ -30,8 +38,16 @@ class LLMService:
         temperature: float = 0.0
     ) -> str:
         try:
-            response = self.model.generate_content(f"{system_prompt}\n\nRespond only in JSON.\n\n{prompt}")
-            return response.text.strip()
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=temperature,
+                response_format={"type": "json_object"}
+            )
+            return response.choices[0].message.content.strip()
         except Exception as e:
             logger.error(f"LLM JSON generation error: {e}")
             raise
